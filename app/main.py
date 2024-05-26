@@ -31,10 +31,7 @@ def main():
     if path == '/':
         response :bytes = "HTTP/1.1 200 OK\r\n\r\n".encode()
     elif path == '/user-agent':
-        print(request_data)
         user_agent = [data for data in request_data if data[:5] == 'User-'][0].split(" ")[1]
-        print(user_agent)
-        # user_agent = request_data[2].split(" ")[1]
         response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent)}\r\n\r\n{user_agent}".encode()
     
     elif path.startswith('/echo'):
