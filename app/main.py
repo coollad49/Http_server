@@ -1,6 +1,7 @@
 # Uncomment this to pass the first stage
 import socket
 import threading
+import sys
 
 def handle_request(request):
     """
@@ -24,7 +25,20 @@ def handle_request(request):
     elif path == '/user-agent':
         user_agent = [data for data in request_data if data[:5] == 'User-'][0].split(" ")[1]
         response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent)}\r\n\r\n{user_agent}".encode()
-    
+    elif '/files' in path:
+        directory = sys.argv[2]
+        print(f"Directory: {directory}")
+        filename = path[7:]
+        print(f"Filename: {filename}")
+        try:
+            with open(f"/{directory}/{filename}", 'r') as file:
+                print(f"Opened successfully")
+                content = file.read()
+            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(content)}\r\n\r\n{content}".encode()
+        except Exception as e:
+            print(f"Error: Reading /{directory}/{filename} failed. Exception: {e}")
+            response :bytes = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
+
     elif path.startswith('/echo'):
         unknown_path = path[6:]
         response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_path)}\r\n\r\n{unknown_path}".encode()
