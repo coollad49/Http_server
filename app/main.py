@@ -1,22 +1,13 @@
 # Uncomment this to pass the first stage
 import socket
+import threading
 
-
-def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!")
-
-    # Uncomment this to pass the first stage
-    #
-    server_socket = socket.create_server(("localhost", 4221))
-    client, address = server_socket.accept() # wait for client
-    print(f"Accepted connection from {address}\n")
-    
+def handle_request(request):
     """
     we're receiving data from the client using the recv method on the client socket. 
     The recv method reads up to 1024 bytes from the client. We then decode this data from bytes to a string using the decode method,
     which converts it to a format we can work with in Python."""
-    data :str = client.recv(1024).decode()
+    data :str = request.decode()
     request_data :list[str] = data.split('\r\n')
     
     # sends http status message or code
@@ -40,9 +31,31 @@ def main():
     else:
         response :bytes = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
     
-    client.send(response)
+    return response
+
+def handle_clients(client):
+    while True:
+        request = client.recv(1024)
+
+        if not request:
+            break
+        response = handle_request(request)
+        client.send(response)
+
     client.close()
-    server_socket.close()
+
+def main():
+    # You can use print statements as follows for debugging, they'll be visible when running tests.
+    print("Logs from your program will appear here!")
+
+    server_socket = socket.create_server(("localhost", 4221))
+    print("Server started. Listening for connections....")
+
+    while True:
+        client, address = server_socket.accept() # wait for client
+        print(f"Accepted connection from {address}\n")
+        threading.Thread(target=handle_clients, args=(client,)).start()
+
 
 
 if __name__ == "__main__":
