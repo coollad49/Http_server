@@ -32,6 +32,7 @@ def main():
     
     client.send(response)
     client.close()
+    server_socket.close()
 
 
 if __name__ == "__main__":
