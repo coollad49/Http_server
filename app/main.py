@@ -22,6 +22,8 @@ def handle_request(request):
     If the path is not '/', we set the response variable to a string that represents a 404 Not Found HTTP response. This string is then encoded into bytes, which is necessary because network communication is done using bytes rather than strings. If the path is '/', the response remains as the 200 OK response set earlier in the code
     """
     method, path, http_version = request_data[0].split(" ")
+    
+
     print(f"Path is {path}\n")
     if path == '/':
         response :bytes = "HTTP/1.1 200 OK\r\n\r\n".encode()
@@ -50,18 +52,26 @@ def handle_request(request):
             try:
                 with open(f"/{directory}/{filename}", 'w') as file:
                     print("Opened Successfully")
-                    file.write(request_body)
+                    file.writelines(request_body)
                 response :bytes = f"HTTP/1.1 201 Created\r\n\r\n".encode()
             except Exception as e:
                 print(f"Error: Reading /{directory}/{filename} failed. Exception: {e}")
                 response :bytes = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
 
     elif path.startswith('/echo'):
+        encoding_Accepted = "".join([item for item in request_data if item[:8] == "Accept-E"])
+        encoding_Accepted = encoding_Accepted.split(" ")
+        _, *encodes = encoding_Accepted
+        encodes = [item.rstrip(',') for item in encodes]
         unknown_path = path[6:]
-        response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_path)}\r\n\r\n{unknown_path}".encode()
+        if 'gzip' in encodes:
+            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_path)}\r\n\r\n{unknown_path}".encode()
+        else:
+            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_path)}\r\n\r\n{unknown_path}".encode()
+
     else:
         response :bytes = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
-    
+
     return response
 
 def handle_clients(client):
