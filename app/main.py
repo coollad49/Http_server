@@ -2,6 +2,8 @@
 import socket
 import threading
 import sys
+import io
+import gzip
 
 def handle_request(request):
     """
@@ -63,15 +65,22 @@ def handle_request(request):
         encoding_Accepted = encoding_Accepted.split(" ")
         _, *encodes = encoding_Accepted
         encodes = [item.rstrip(',') for item in encodes]
-        unknown_path = path[6:]
+        print(encodes)
+        unknown_data = path[6:]
+        unknown_data_in_bytes: bytes = unknown_data.encode("utf-8")
+
         if 'gzip' in encodes:
-            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_path)}\r\n\r\n{unknown_path}".encode()
+            buffer = io.BytesIO()
+            compressed_data = gzip.compress(unknown_data_in_bytes)
+            buffer.write(compressed_data)
+            compressed_bytes = buffer.getvalue()
+            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(compressed_bytes)}\r\n\r\n".encode() + compressed_bytes
         else:
-            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_path)}\r\n\r\n{unknown_path}".encode()
+            response :bytes = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(unknown_data)}\r\n\r\n{unknown_data}".encode()
 
     else:
-        response :bytes = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
-
+        response :bytes = "HTTP/1.1 404 Not Found\r\n\r\n".encode()\
+            
     return response
 
 def handle_clients(client):
